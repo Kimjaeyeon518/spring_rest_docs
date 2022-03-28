@@ -13,7 +13,6 @@ public class CharacterRequestDto {
     private Float attackPower;          // 공격력
     private Integer attackSpeed;        // 공격속도
     private CharacterSpecies characterSpecies;      // 종족
-    private Weapon weapon;
 
     public CharacterRequestDto(Long id) {
         this.id = id;
@@ -26,7 +25,6 @@ public class CharacterRequestDto {
                 .attackPower(this.attackPower)
                 .attackSpeed(this.attackSpeed)
                 .characterSpecies(this.characterSpecies)
-                .weapon(this.weapon)
                 .build();
     }
 }

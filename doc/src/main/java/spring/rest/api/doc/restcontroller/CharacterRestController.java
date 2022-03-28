@@ -1,11 +1,15 @@
 package spring.rest.api.doc.restcontroller;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import spring.rest.api.doc.domain.Characters;
 import spring.rest.api.doc.dto.CharacterRequestDto;
 import spring.rest.api.doc.dto.CharacterResponseDto;
+import spring.rest.api.doc.dto.ListResponse;
+import spring.rest.api.doc.dto.SingleResponse;
 import spring.rest.api.doc.service.CharacterService;
 
 import java.util.Collections;
@@ -17,33 +21,33 @@ public class CharacterRestController {
 
     private final CharacterService characterService;
 
-    private static class ListResponse {
-        private List<CharacterResponseDto> data;
-
-        public ListResponse(List<CharacterResponseDto> characterResponseDtoList) {
-            this.data = characterResponseDtoList;
-        }
-    }
-
     @GetMapping("/characters")
-    public ResponseEntity<Object> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(characterService.findAll());
+    public ListResponse<CharacterResponseDto> findAll() {
+        ListResponse<CharacterResponseDto> result = new ListResponse<>();
+        result.setData(characterService.findAll());
+        return result;
     }
 
     @GetMapping("/characters/{id}")
-    public ResponseEntity<CharacterResponseDto> findOne(@PathVariable("id") Long id) {
-        return ResponseEntity.status(HttpStatus.OK).body(characterService.findById(id));
+    public SingleResponse<CharacterResponseDto> findOne(@PathVariable("id") Long id) {
+        SingleResponse<CharacterResponseDto> result = new SingleResponse<>();
+        result.setData(characterService.findById(id));
+        return result;
     }
 
     @PostMapping("/characters")
-    public ResponseEntity<CharacterResponseDto> create(@ModelAttribute CharacterRequestDto characterRequestDto) {
-        return ResponseEntity.status(HttpStatus.OK).body(characterService.create(characterRequestDto));
+    public SingleResponse<CharacterResponseDto> create(@ModelAttribute CharacterRequestDto characterRequestDto) {
+        SingleResponse<CharacterResponseDto> result = new SingleResponse<>();
+        result.setData(characterService.create(characterRequestDto));
+        return result;
     }
 
     @PutMapping("/characters/{id}")
-    public ResponseEntity<CharacterResponseDto> update(@PathVariable("id") Long id,
+    public SingleResponse<CharacterResponseDto> update(@PathVariable("id") Long id,
                                                        @ModelAttribute CharacterRequestDto characterRequestDto) throws Exception {
-        return ResponseEntity.status(HttpStatus.OK).body(characterService.update(id, characterRequestDto));
+        SingleResponse<CharacterResponseDto> result = new SingleResponse<>();
+        result.setData(characterService.update(id, characterRequestDto));
+        return result;
     }
 
     @DeleteMapping("/characters/{id}")

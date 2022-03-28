@@ -2,6 +2,7 @@ package spring.rest.api.doc.domain;
 
 import lombok.*;
 import spring.rest.api.doc.dto.CharacterResponseDto;
+import spring.rest.api.doc.dto.WeaponResponseDto;
 
 import javax.persistence.*;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class Characters {
     private CharacterSpecies characterSpecies;     // 종족
 
     @ManyToOne
-    @JoinColumn(name = "weapon_id", nullable = false)
+    @JoinColumn(name = "weapon_id", nullable = true)
     private Weapon weapon;
 
     public CharacterResponseDto toResponseDto() {
@@ -36,7 +37,7 @@ public class Characters {
                 .attackPower(this.attackPower)
                 .attackSpeed(this.attackSpeed)
                 .characterSpecies(this.characterSpecies)
-                .weapon(this.weapon)
+//                .weapon(new WeaponResponseDto(this.weapon))
                 .build();
     }
 }

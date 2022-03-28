@@ -14,6 +14,7 @@ import javax.persistence.EntityNotFoundException;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,11 +25,9 @@ public class CharacterServiceImpl implements CharacterService {
 
     @Override
     public List<CharacterResponseDto> findAll() {
-        List<CharacterResponseDto> characterResponseDtoList = new ArrayList<>();
-
-        for(Characters characters : characterRepository.findAll()) {
-            characterResponseDtoList.add(characters.toResponseDto());
-        }
+        List<CharacterResponseDto> characterResponseDtoList = characterRepository.findAll().stream()
+                .map(c -> new CharacterResponseDto(c))
+                .collect(Collectors.toList());
 
         return characterResponseDtoList;
     }

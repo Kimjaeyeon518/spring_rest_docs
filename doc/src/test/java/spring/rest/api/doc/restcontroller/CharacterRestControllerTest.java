@@ -1,5 +1,6 @@
 package spring.rest.api.doc.restcontroller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -9,7 +10,9 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -21,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.event.annotation.AfterTestExecution;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 import spring.rest.api.doc.DocApplication;
@@ -42,6 +46,7 @@ import static org.mockito.Mockito.times;
 
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.documentationConfiguration;
+import static org.springframework.restdocs.operation.preprocess.Preprocessors.*;
 import static org.springframework.restdocs.payload.PayloadDocumentation.*;
 import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.restdocs.snippet.Attributes.attributes;
@@ -65,10 +70,13 @@ public class CharacterRestControllerTest {
     @RegisterExtension
     final RestDocumentationExtension restDocumentationExt = new RestDocumentationExtension ("src/main/resources/static");
 
-    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @MockBean
     private CharacterService characterService;
+
+    private MockMvc mockMvc;
 
     private Characters characters;
 
@@ -76,11 +84,16 @@ public class CharacterRestControllerTest {
     public void setUp(WebApplicationContext webApplicationContext, RestDocumentationContextProvider restDocumentation) {
         characters = Characters.builder()
                 .id(1L)
-                .weapon(new Weapon(1L))
+                .hp(100F)
+                .attackPower(15F)
+                .attackSpeed(50)
+                .characterSpecies(CharacterSpecies.HUMAN)
                 .build();
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-                .apply(documentationConfiguration(restDocumentation))   // MockMvc instance 에 MockMvcRestDocumentationConfigurer 적용
+                // MockMvc instance 에 MockMvcRestDocumentationConfigurer 적용
+                .apply(documentationConfiguration(restDocumentation).operationPreprocessors()
+                        .withResponseDefaults(prettyPrint()))
                 .build();
     }
 
@@ -91,6 +104,8 @@ public class CharacterRestControllerTest {
         // given
         List<CharacterResponseDto> characterResponseDtoList = new ArrayList<>();
         characterResponseDtoList.add(characters.toResponseDto());
+        characterResponseDtoList.add(characters.toResponseDto());
+        characterResponseDtoList.add(characters.toResponseDto());
         given(characterService.findAll()).willReturn(characterResponseDtoList);
 
         // when
@@ -98,7 +113,7 @@ public class CharacterRestControllerTest {
                 .andExpect(status().isOk())
                 .andDo(document("characterList", responseFields(
                         // subsectionWithPath : 상위 레벨 수준의 overview 제공
-                        subsectionWithPath("characterList").description("An array of Characters"))));
+                        subsectionWithPath("data").description("캐릭터 배열"))));
 
         // then
         then(characterService).should(times(1)).findAll();
@@ -120,12 +135,12 @@ public class CharacterRestControllerTest {
                         responseFields(
                                 // fieldWithPath : 구체적인 overview 제공
                                 // type(JsonFieldType.**) : 해당 필드의 타입 정보 설정
-                                fieldWithPath("id").description("The character's id"),
-                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("The character's hp"),
-                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("The character's attackPower"),
-                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("The character's attackSpeed"),
-                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("The character's characterSpecies"),
-                                subsectionWithPath("weapon").description("The character's weapon"))));
+                                fieldWithPath("data.id").description("캐릭터 ID"),
+                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
+                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
+                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
+                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
+                                subsectionWithPath("data.weapon").description("캐릭터의 무기"))));
 
         // then
         then(characterService).should(times(1)).findById(id);
@@ -139,23 +154,39 @@ public class CharacterRestControllerTest {
         given(characterService.create(any(CharacterRequestDto.class))).willReturn(characters.toResponseDto());
 
         // when
-        this.mockMvc.perform(post("/characters")
-                        .param("hp", "100F")
-                        .param("attackPower", "10F")
-                        .param("attackSpeed", "100F")
-                        .param("characterSpecies", "HUMAN")
-                        .param("weapon", "Sword"))
-                .andExpect(status().isOk())
-                .andDo(document("character-create",
-                        // requestParameters : 필요한 파라미터 리스트 정의.
-                        // parameterWithName : 파라미터 이름
-                        requestParameters(parameterWithName("hp").description("The character's hp"),
-                                parameterWithName("attackPower").description("The character's attackPower"),
-                                parameterWithName("attackSpeed").description("The character's attackSpeed"),
-                                parameterWithName("characterSpecies").description("The character's characterSpecies"),
-                                parameterWithName("weapon").description("The character's weapon"))));
+        ResultActions result = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.post("/characters")
+                        .content(objectMapper.writeValueAsString(characters))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON));
 
         // then
+        result.andExpect(status().isOk())
+                .andDo(document("character-create",
+                        preprocessRequest(
+                                modifyUris() // (1)
+                                        .scheme("https")
+                                        .host("docs.api.com")
+                                        .removePort(),
+                                prettyPrint()),
+                        requestFields(
+                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("캐릭터 ID(=NULL)").optional(),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
+                                fieldWithPath("weapon").type(JsonFieldType.STRING).description("캐릭터의 무기").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("생성된 캐릭터 ID"),
+                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("생성된 캐릭터 체력"),
+                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격력"),
+                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격속도"),
+                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("생성된 캐릭터의 종족"),
+                                fieldWithPath("data.weapon").type(JsonFieldType.STRING).description("생성된 캐릭터의 무기").optional()
+                        )
+                ));
+
         then(characterService).should(times(1)).create(any(CharacterRequestDto.class));
     }
 
@@ -167,23 +198,43 @@ public class CharacterRestControllerTest {
         given(characterService.update(any(Long.class), any(CharacterRequestDto.class))).willReturn(characters.toResponseDto());
 
         // when
-        this.mockMvc.perform(RestDocumentationRequestBuilders.put("/characters/{id}", id)
-                        .param("hp", "10F")
-                        .param("attackPower", "10F")
-                        .param("attackSpeed", "100F")
-                        .param("characterSpecies", "HUMAN")
-                        .param("weapon", "Sword"))
-                .andExpect(status().isOk())
-                .andDo(document("character-update",
-                        // pathParameters : 경로명
-                        pathParameters(parameterWithName("id").description("The character's id")),
-                        requestParameters(parameterWithName("hp").description("The character's hp"),
-                                parameterWithName("attackPower").description("The character's attackPower"),
-                                parameterWithName("attackSpeed").description("The character's attackSpeed"),
-                                parameterWithName("characterSpecies").description("The character's characterSpecies"),
-                                parameterWithName("weapon").description("The character's weapon"))));
+        ResultActions result = this.mockMvc.perform(
+                RestDocumentationRequestBuilders.put("/characters/{id}", id)
+                        .content(objectMapper.writeValueAsString(characters))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON));
 
         // then
+        result.andExpect(status().isOk())
+                .andDo(document("character-update",
+                        preprocessRequest(
+                                modifyUris() // (1)
+                                        .scheme("https")
+                                        .host("docs.api.com")
+                                        .removePort(),
+                                prettyPrint()),
+                        // pathParameters : 파라미터 정보
+                        pathParameters(
+                                parameterWithName("id").description("캐릭터 ID")
+                        ),
+                        requestFields(
+                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("캐릭터 ID"),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
+                                fieldWithPath("weapon").type(JsonFieldType.STRING).description("캐릭터의 무기").optional()
+                        ),
+                        responseFields(
+                                fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("수정된 캐릭터 ID"),
+                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("수정된 캐릭터 체력"),
+                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격력"),
+                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격속도"),
+                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("수정된 캐릭터의 종족"),
+                                fieldWithPath("data.weapon").type(JsonFieldType.STRING).description("수정된 캐릭터의 무기").optional()
+                        )
+                ));
+
         then(characterService).should(times(1)).update(any(Long.class), any(CharacterRequestDto.class));
     }
 
@@ -197,7 +248,7 @@ public class CharacterRestControllerTest {
         this.mockMvc.perform(RestDocumentationRequestBuilders.delete("/characters/{id}", id))
                 .andExpect(status().isOk())
                 .andDo(document("character-delete",
-                        pathParameters(parameterWithName("id").description("The character's id"))));
+                        pathParameters(parameterWithName("id").description("삭제된 캐릭터 ID"))));
 
         // then
         then(characterService).should(times(1)).deleteById(any(Long.class));
