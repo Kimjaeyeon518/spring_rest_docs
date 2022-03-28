@@ -1,14 +1,27 @@
-spring:
-  ### DB Config
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/biginsight?useUnicode=true&serverTimezone=UTC&characterEncoding=UTF-8
-    username: root
-    password: wodus123
+#spring:
+#  ### DB Config
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/biginsight?useUnicode=true&serverTimezone=UTC&characterEncoding=UTF-8
+#    username: root
+#    password: wodus123
+#
+#  ### JPA Config
+#  jpa:
+#    show-sql: false
+#    hibernate:
+#      ddl-auto: update
+#    database-platform: org.hibernate.dialect.MySQL5Dialect
 
-  ### JPA Config
+spring:
+  h2:
+    console.enabled: true
+  datasource:
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driverClassName: org.h2.Driver
   jpa:
-    show-sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.MySQL5Dialect
+      ddl-auto: create

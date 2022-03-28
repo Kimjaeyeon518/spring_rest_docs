@@ -17,10 +17,17 @@ public class CharacterRestController {
 
     private final CharacterService characterService;
 
+    private static class ListResponse {
+        private List<CharacterResponseDto> data;
+
+        public ListResponse(List<CharacterResponseDto> characterResponseDtoList) {
+            this.data = characterResponseDtoList;
+        }
+    }
+
     @GetMapping("/characters")
     public ResponseEntity<Object> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(
-                Collections.singletonMap("characterList", characterService.findAll()));
+        return ResponseEntity.status(HttpStatus.OK).body(characterService.findAll());
     }
 
     @GetMapping("/characters/{id}")

@@ -1,7 +1,7 @@
 plugins {
 	id 'org.springframework.boot' version '2.6.4'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-	id "org.asciidoctor.jvm.convert" version "3.3.2"
+	id "org.asciidoctor.jvm.convert" version "3.3.2"	// Asciidoctor plugin 적용
 	id 'java'
 }
 
@@ -25,21 +25,20 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
-	runtimeOnly 'mysql:mysql-connector-java'
+	runtimeOnly 'com.h2database:h2'
+//	runtimeOnly 'mysql:mysql-connector-java'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 }
 
 ext {
-	snippetsDir = file('build/generated-snippets')
+	snippetsDir = file('src/main/resources/static')		// generated snippets location 설정
 }
 
 test {
 	outputs.dir snippetsDir
 }
-
-// flow : test -> asciidoctor -> build jar
 
 asciidoctor {
 	configurations 'asciidoctorExt'
@@ -54,3 +53,5 @@ bootJar {
 	}
 }
 targetCompatibility = JavaVersion.VERSION_17
+
+// flow : test -> asciidoctor -> build jar

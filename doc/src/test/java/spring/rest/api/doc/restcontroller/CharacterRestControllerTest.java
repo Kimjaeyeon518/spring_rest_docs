@@ -1,19 +1,24 @@
 package spring.rest.api.doc.restcontroller;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationContextProvider;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders;
+import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.event.annotation.AfterTestExecution;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -46,15 +51,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 
 @SpringBootTest
-//@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = DocApplication.class)
-/*
- * RestDocumentationExtension.class : When using JUnit 5, generate documentation snippets
- *									 -> automatically configured with an output directory(build/generated-snippets)
- * SpringExtension.class : testing a typical Spring application
+/**
+ * @ExtendWith(RestDocumentationExtension.class) : 설정 시 documentation snippets default 생성 위치 : "build/generated-snippets"
  */
-@ExtendWith({RestDocumentationExtension.class, SpringExtension.class, MockitoExtension.class})
-class CharacterRestControllerTest {
+@ExtendWith({SpringExtension.class, MockitoExtension.class})
+public class CharacterRestControllerTest {
+
+    /**
+     * .adoc file 생성 위치를 "src/main/resources/static" 으로 설정
+     */
+    @RegisterExtension
+    final RestDocumentationExtension restDocumentationExt = new RestDocumentationExtension ("src/main/resources/static");
 
     private MockMvc mockMvc;
 
@@ -71,9 +80,10 @@ class CharacterRestControllerTest {
                 .build();
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
-                .apply(documentationConfiguration(restDocumentation))   // MockMvc instance is configured by using a MockMvcRestDocumentationConfigurer
+                .apply(documentationConfiguration(restDocumentation))   // MockMvc instance 에 MockMvcRestDocumentationConfigurer 적용
                 .build();
     }
+
 
     @Test
     @DisplayName("캐릭터 리스트 조회")
@@ -87,6 +97,7 @@ class CharacterRestControllerTest {
         this.mockMvc.perform(get("/characters").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andDo(document("characterList", responseFields(
+                        // subsectionWithPath : 상위 레벨 수준의 overview 제공
                         subsectionWithPath("characterList").description("An array of Characters"))));
 
         // then
@@ -102,17 +113,18 @@ class CharacterRestControllerTest {
         given(characterService.findById(any(Long.class))).willReturn(characters.toResponseDto());
 
         // when
-        // pathParameters 를 사용하는 요청은 RestDocumentationRequestBuilders 사용
-        this.mockMvc.perform(RestDocumentationRequestBuilders.get("/characters/{id}", id).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(RestDocumentationRequestBuilders.get("/characters/{id}", id).accept(MediaType.APPLICATION_JSON))  // pathParameters 를 사용하는 요청은 RestDocumentationRequestBuilders 사용
                 .andExpect(status().isOk())
                 .andDo(document("character-read",
                         pathParameters(parameterWithName("id").description("The character's id")),
                         responseFields(
+                                // fieldWithPath : 구체적인 overview 제공
+                                // type(JsonFieldType.**) : 해당 필드의 타입 정보 설정
                                 fieldWithPath("id").description("The character's id"),
-                                fieldWithPath("hp").description("The character's hp"),
-                                fieldWithPath("attackPower").description("The character's attackPower"),
-                                fieldWithPath("attackSpeed").description("The character's attackSpeed"),
-                                fieldWithPath("characterSpecies").description("The character's characterSpecies"),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("The character's hp"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("The character's attackPower"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("The character's attackSpeed"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("The character's characterSpecies"),
                                 subsectionWithPath("weapon").description("The character's weapon"))));
 
         // then
@@ -135,6 +147,8 @@ class CharacterRestControllerTest {
                         .param("weapon", "Sword"))
                 .andExpect(status().isOk())
                 .andDo(document("character-create",
+                        // requestParameters : 필요한 파라미터 리스트 정의.
+                        // parameterWithName : 파라미터 이름
                         requestParameters(parameterWithName("hp").description("The character's hp"),
                                 parameterWithName("attackPower").description("The character's attackPower"),
                                 parameterWithName("attackSpeed").description("The character's attackSpeed"),
@@ -161,6 +175,7 @@ class CharacterRestControllerTest {
                         .param("weapon", "Sword"))
                 .andExpect(status().isOk())
                 .andDo(document("character-update",
+                        // pathParameters : 경로명
                         pathParameters(parameterWithName("id").description("The character's id")),
                         requestParameters(parameterWithName("hp").description("The character's hp"),
                                 parameterWithName("attackPower").description("The character's attackPower"),
