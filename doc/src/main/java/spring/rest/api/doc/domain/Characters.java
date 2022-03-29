@@ -1,6 +1,7 @@
 package spring.rest.api.doc.domain;
 
 import lombok.*;
+import spring.rest.api.doc.dto.CharacterRequestDto;
 import spring.rest.api.doc.dto.CharacterResponseDto;
 import spring.rest.api.doc.dto.WeaponResponseDto;
 
@@ -39,5 +40,11 @@ public class Characters {
                 .characterSpecies(this.characterSpecies)
 //                .weapon(new WeaponResponseDto(this.weapon))
                 .build();
+    }
+
+    public void update(CharacterRequestDto characterRequestDto) {
+        this.hp = characterRequestDto.getHp();
+        this.attackPower = characterRequestDto.getAttackPower();
+        this.attackSpeed = characterRequestDto.getAttackSpeed();
     }
 }

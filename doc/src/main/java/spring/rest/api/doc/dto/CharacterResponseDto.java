@@ -7,6 +7,7 @@ import spring.rest.api.doc.domain.Weapon;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class CharacterResponseDto {
     private Long id;
@@ -22,5 +23,10 @@ public class CharacterResponseDto {
         attackPower = characters.getAttackPower();
         characterSpecies = characters.getCharacterSpecies();
         weapon = new WeaponResponseDto(characters.getWeapon());
+    }
+
+    @Data
+    public static class delete {
+        private Long id;
     }
 }

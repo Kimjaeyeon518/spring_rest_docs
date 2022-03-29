@@ -21,7 +21,7 @@ repositories {
 }
 
 dependencies {
-	asciidoctorExt "org.springframework.restdocs:spring-restdocs-asciidoctor"
+	asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	compileOnly 'org.projectlombok:lombok'
@@ -33,25 +33,38 @@ dependencies {
 }
 
 ext {
-	snippetsDir = file('src/main/resources/static')		// generated snippets location 설정
+	snippetsDir = file("build/generated-snippets")		// generated snippets location 설정
 }
 
 test {
 	outputs.dir snippetsDir
+	println "--------------TEST START-------------"
 }
 
 asciidoctor {
-	configurations 'asciidoctorExt'
-	dependsOn test	// tests are run before the documentation is created.
 	inputs.dir snippetsDir
+	configurations 'asciidoctorExt'
+	dependsOn test	// test task 이후에 실행될 수 있도록 의존성 설정
+	println "--------------asciidoctor START-------------"
 }
 
 bootJar {
 	dependsOn asciidoctor    // documentation has been generated before the jar is built
-	from("${asciidoctor.outputDir}/html5") {
-		into 'static/docs'	// Copy the generated documentation into the jar’s static/docs directory.
+	// 실제 배포 시, BOOT-INF/classes가 classpath가 됩니다.
+	println "@@@@@@@@@@@@@@@@@"
+	println "${asciidoctor.outputDir}"
+	from ("${asciidoctor.outputDir}") {
+		into 'static/docs'
 	}
 }
+
+task copyDocument(type: Copy) {
+	println "--------------copyDocument START-------------"
+	dependsOn asciidoctor
+	from file("build/docs/asciidoc")
+	into file("src/main/resources/static/docs")
+}
+
 targetCompatibility = JavaVersion.VERSION_17
 
 // flow : test -> asciidoctor -> build jar

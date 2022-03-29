@@ -7,10 +7,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import spring.rest.api.doc.domain.Characters;
 import spring.rest.api.doc.dto.CharacterRequestDto;
 import spring.rest.api.doc.dto.CharacterResponseDto;
+import spring.rest.api.doc.exception.NotFoundException;
 import spring.rest.api.doc.repository.CharacterRepository;
 import spring.rest.api.doc.service.CharacterService;
 
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 import java.security.InvalidKeyException;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,46 +27,44 @@ public class CharacterServiceImpl implements CharacterService {
 
     @Override
     public List<CharacterResponseDto> findAll() {
-        List<CharacterResponseDto> characterResponseDtoList = characterRepository.findAll().stream()
+        return characterRepository.findAll().stream()
                 .map(c -> new CharacterResponseDto(c))
                 .collect(Collectors.toList());
-
-        return characterResponseDtoList;
     }
 
     @Override
     public CharacterResponseDto findById(Long id) {
-        Characters characters = characterRepository.findById(id)
-                .orElseThrow(NullPointerException::new);
-
-        return characters.toResponseDto();
+        return characterRepository.findById(id)
+                .map(c -> new CharacterResponseDto(c))
+                .orElseThrow(NotFoundException::new);
     }
 
     @Override
     public CharacterResponseDto create(CharacterRequestDto characterRequestDto) {
-        Characters characters = characterRepository.save(characterRequestDto.toEntity());
+        Characters character = characterRepository.save(characterRequestDto.toEntity());
 
-        return characters.toResponseDto();
+        return character.toResponseDto();
     }
 
     @Override
-    public CharacterResponseDto update(Long id, CharacterRequestDto characterRequestDto) throws Exception {
+    @Transactional
+    public CharacterResponseDto update(Long id, CharacterRequestDto characterRequestDto) {
 
-        if(id != characterRequestDto.getId())
-            throw new InvalidKeyException();
+        Characters character = characterRepository.findById(id)
+                .orElseThrow(NotFoundException::new);
 
-        if(!characterRepository.existsById(characterRequestDto.getId()))
-            throw new EntityNotFoundException();
+        if(id != character.getId())
+            throw new NotFoundException();
 
-        Characters characters = characterRepository.save(characterRequestDto.toEntity());
+        characterRequestDto.apply(character);
 
-        return characters.toResponseDto();
+        return new CharacterResponseDto(character);
     }
 
     @Override
-    public void deleteById(Long id) {
+    public void delete(Long id) {
         if(!characterRepository.existsById(id))
-            throw new EntityNotFoundException();
+            throw new NotFoundException();
 
         characterRepository.deleteById(id);
     }

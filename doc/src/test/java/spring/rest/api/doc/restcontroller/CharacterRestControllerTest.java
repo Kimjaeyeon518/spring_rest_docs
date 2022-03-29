@@ -24,6 +24,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.event.annotation.AfterTestExecution;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
@@ -53,22 +54,24 @@ import static org.springframework.restdocs.snippet.Attributes.attributes;
 import static org.springframework.restdocs.snippet.Attributes.key;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static spring.rest.api.doc.util.ApiDocumentUtils.getDocumentRequest;
+import static spring.rest.api.doc.util.ApiDocumentUtils.getDocumentResponse;
 
 
 @SpringBootTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ContextConfiguration(classes = DocApplication.class)
-/**
- * @ExtendWith(RestDocumentationExtension.class) : 설정 시 documentation snippets default 생성 위치 : "build/generated-snippets"
- */
-@ExtendWith({SpringExtension.class, MockitoExtension.class})
+@ExtendWith({
+        RestDocumentationExtension.class, // 설정 시 documentation snippets default 생성 위치 : "build/generated-snippets"
+        SpringExtension.class,
+        MockitoExtension.class})
 public class CharacterRestControllerTest {
 
     /**
      * .adoc file 생성 위치를 "src/main/resources/static" 으로 설정
      */
-    @RegisterExtension
-    final RestDocumentationExtension restDocumentationExt = new RestDocumentationExtension ("src/main/resources/static");
+//    @RegisterExtension
+//    final RestDocumentationExtension restDocumentationExt = new RestDocumentationExtension ("src/main/resources/static");
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -92,11 +95,48 @@ public class CharacterRestControllerTest {
 
         this.mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 // MockMvc instance 에 MockMvcRestDocumentationConfigurer 적용
-                .apply(documentationConfiguration(restDocumentation).operationPreprocessors()
-                        .withResponseDefaults(prettyPrint()))
+                .apply(documentationConfiguration(restDocumentation))
+//                        .operationPreprocessors().withResponseDefaults(prettyPrint()))   // response JSON 형태 개선
                 .build();
     }
 
+    @Test
+    @DisplayName("공통 코드")
+    public void commonCode() throws Exception {
+        // given
+
+        // when
+
+        // then
+//        mockMvc.perform(
+//                        post("/test/request")
+//                                .contentType(MediaType.APPLICATION_JSON)
+//                                .content("{\"name\": \"\", \"email\": \"asd\"}")
+//                )
+//                .andExpect(status().isBadRequest())
+//                .andDo(
+//                        restDocs.document(
+//                                responseFields(
+//                                        fieldWithPath("message").description("에러 메시지"),
+//                                        fieldWithPath("status").description("Http Status Code"),
+//                                        fieldWithPath("code").description("Error Code"),
+//                                        fieldWithPath("timestamp").description("에러 발생 시간"),
+//                                        fieldWithPath("errors").description("Error 값 배열 값"),
+//                                        fieldWithPath("errors[0].field").description("문제 있는 필드"),
+//                                        fieldWithPath("errors[0].value").description("문제가 있는 값"),
+//                                        fieldWithPath("errors[0].reason").description("문재가 있는 이유")
+//                                )
+//                        )
+//                );
+//        this.mockMvc.perform(get("/*")).andExpect(status().isOk())
+//                .andDo(document("common",
+//                        customResponseFields("custom-response", null, // (1)
+//                                attributes(key("title").value("공통응답")),
+//                                subsectionWithPath("data").description("데이터"),
+//                                fieldWithPath("code").type(JsonFieldType.STRING).description("결과코드"),
+//                                fieldWithPath("message").type(JsonFieldType.STRING).description("결과메시지")
+//                        )
+    }
 
     @Test
     @DisplayName("캐릭터 리스트 조회")
@@ -109,13 +149,24 @@ public class CharacterRestControllerTest {
         given(characterService.findAll()).willReturn(characterResponseDtoList);
 
         // when
-        this.mockMvc.perform(get("/characters").accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk())
-                .andDo(document("characterList", responseFields(
-                        // subsectionWithPath : 상위 레벨 수준의 overview 제공
-                        subsectionWithPath("data").description("캐릭터 배열"))));
+        ResultActions result = this.mockMvc.perform(get("/characters")
+                        .accept(MediaType.APPLICATION_JSON));
 
         // then
+        result.andExpect(status().isOk())
+                .andDo(document("characterList",
+                        getDocumentRequest(),
+                        getDocumentResponse(),
+                        responseFields(beneathPath("data").withSubsectionId("data"),
+                            fieldWithPath("id").description("캐릭터 ID"),
+                            fieldWithPath("hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
+                            fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
+                            fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
+                            fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
+                            subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>")
+                        )
+                ));
+
         then(characterService).should(times(1)).findAll();
         assertThat(characterService.findAll()).isEqualTo(characterResponseDtoList);
     }
@@ -128,21 +179,29 @@ public class CharacterRestControllerTest {
         given(characterService.findById(any(Long.class))).willReturn(characters.toResponseDto());
 
         // when
-        this.mockMvc.perform(RestDocumentationRequestBuilders.get("/characters/{id}", id).accept(MediaType.APPLICATION_JSON))  // pathParameters 를 사용하는 요청은 RestDocumentationRequestBuilders 사용
-                .andExpect(status().isOk())
-                .andDo(document("character-read",
-                        pathParameters(parameterWithName("id").description("The character's id")),
-                        responseFields(
-                                // fieldWithPath : 구체적인 overview 제공
-                                // type(JsonFieldType.**) : 해당 필드의 타입 정보 설정
-                                fieldWithPath("data.id").description("캐릭터 ID"),
-                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
-                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
-                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
-                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
-                                subsectionWithPath("data.weapon").description("캐릭터의 무기"))));
+        ResultActions result = this.mockMvc.perform(RestDocumentationRequestBuilders.get("/characters/{id}", id) // pathParameters 를 사용하는 요청은 RestDocumentationRequestBuilders 사용
+                .accept(MediaType.APPLICATION_JSON));
 
         // then
+        result.andExpect(status().isOk())
+                .andDo(document("character-read",
+                        getDocumentRequest(),
+                        getDocumentResponse(),
+                        pathParameters(
+                                parameterWithName("id").description("조회할 캐릭터 ID")
+                        ),
+                        responseFields(beneathPath("data").withSubsectionId("data"),    // beneathPath : "data" 라는 필드의 내부값을 제외한 다른 response 필드 무시.
+                                // fieldWithPath : 구체적인 overview 제공
+                                // type(JsonFieldType.**) : 해당 필드의 타입 정보 설정
+                                fieldWithPath("id").description("캐릭터 ID"),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
+                                subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>")
+                        )
+                ));
+
         then(characterService).should(times(1)).findById(id);
         assertThat(characterService.findById(id).getId()).isEqualTo(characters.getId());
     }
@@ -163,27 +222,23 @@ public class CharacterRestControllerTest {
         // then
         result.andExpect(status().isOk())
                 .andDo(document("character-create",
-                        preprocessRequest(
-                                modifyUris() // (1)
-                                        .scheme("https")
-                                        .host("docs.api.com")
-                                        .removePort(),
-                                prettyPrint()),
+                        getDocumentRequest(),
+                        getDocumentResponse(),
                         requestFields(
-                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("캐릭터 ID(=NULL)").optional(),
+                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("캐릭터 ID(=NULL)").optional(),     // 필수 파라미터가 아닐 때 optional() 사용
                                 fieldWithPath("hp").type(JsonFieldType.NUMBER).description("캐릭터의 체력"),
                                 fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
                                 fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
                                 fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
-                                fieldWithPath("weapon").type(JsonFieldType.STRING).description("캐릭터의 무기").optional()
+                                subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>").optional()
                         ),
-                        responseFields(
-                                fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("생성된 캐릭터 ID"),
-                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("생성된 캐릭터 체력"),
-                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격력"),
-                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격속도"),
-                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("생성된 캐릭터의 종족"),
-                                fieldWithPath("data.weapon").type(JsonFieldType.STRING).description("생성된 캐릭터의 무기").optional()
+                        responseFields(beneathPath("data").withSubsectionId("data"),
+                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("생성된 캐릭터 ID"),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("생성된 캐릭터 체력"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격력"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("생성된 캐릭터의 공격속도"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("생성된 캐릭터의 종족"),
+                                subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>").optional()
                         )
                 ));
 
@@ -207,12 +262,8 @@ public class CharacterRestControllerTest {
         // then
         result.andExpect(status().isOk())
                 .andDo(document("character-update",
-                        preprocessRequest(
-                                modifyUris() // (1)
-                                        .scheme("https")
-                                        .host("docs.api.com")
-                                        .removePort(),
-                                prettyPrint()),
+                        getDocumentRequest(),
+                        getDocumentResponse(),
                         // pathParameters : 파라미터 정보
                         pathParameters(
                                 parameterWithName("id").description("캐릭터 ID")
@@ -223,15 +274,15 @@ public class CharacterRestControllerTest {
                                 fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("캐릭터의 공격력"),
                                 fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("캐릭터의 공격속도"),
                                 fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("캐릭터의 종족"),
-                                fieldWithPath("weapon").type(JsonFieldType.STRING).description("캐릭터의 무기").optional()
+                                subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>").optional()
                         ),
-                        responseFields(
-                                fieldWithPath("data.id").type(JsonFieldType.NUMBER).description("수정된 캐릭터 ID"),
-                                fieldWithPath("data.hp").type(JsonFieldType.NUMBER).description("수정된 캐릭터 체력"),
-                                fieldWithPath("data.attackPower").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격력"),
-                                fieldWithPath("data.attackSpeed").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격속도"),
-                                fieldWithPath("data.characterSpecies").type(JsonFieldType.STRING).description("수정된 캐릭터의 종족"),
-                                fieldWithPath("data.weapon").type(JsonFieldType.STRING).description("수정된 캐릭터의 무기").optional()
+                        responseFields(beneathPath("data").withSubsectionId("data"),
+                                fieldWithPath("id").type(JsonFieldType.NUMBER).description("수정된 캐릭터 ID"),
+                                fieldWithPath("hp").type(JsonFieldType.NUMBER).description("수정된 캐릭터 체력"),
+                                fieldWithPath("attackPower").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격력"),
+                                fieldWithPath("attackSpeed").type(JsonFieldType.NUMBER).description("수정된 캐릭터의 공격속도"),
+                                fieldWithPath("characterSpecies").type(JsonFieldType.STRING).description("수정된 캐릭터의 종족"),
+                                subsectionWithPath("weapon").description("<<weapon,캐릭터 무기>>").optional()
                         )
                 ));
 
@@ -245,12 +296,18 @@ public class CharacterRestControllerTest {
         Long id = 1L;
 
         // when
-        this.mockMvc.perform(RestDocumentationRequestBuilders.delete("/characters/{id}", id))
-                .andExpect(status().isOk())
-                .andDo(document("character-delete",
-                        pathParameters(parameterWithName("id").description("삭제된 캐릭터 ID"))));
+        ResultActions result = this.mockMvc.perform(RestDocumentationRequestBuilders.delete("/characters/{id}", id));
 
         // then
-        then(characterService).should(times(1)).deleteById(any(Long.class));
+        result.andExpect(status().isOk())
+                .andDo(document("character-delete",
+                        getDocumentRequest(),
+                        getDocumentResponse(),
+                        pathParameters(
+                                parameterWithName("id").description("삭제할 캐릭터 ID")
+                        )
+                ));
+
+        then(characterService).should(times(1)).delete(any(Long.class));
     }
 }

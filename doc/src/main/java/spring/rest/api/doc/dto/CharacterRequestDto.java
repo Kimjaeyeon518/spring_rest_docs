@@ -1,5 +1,6 @@
 package spring.rest.api.doc.dto;
 
+import lombok.Builder;
 import lombok.Getter;
 import spring.rest.api.doc.domain.CharacterSpecies;
 import spring.rest.api.doc.domain.Characters;
@@ -26,5 +27,9 @@ public class CharacterRequestDto {
                 .attackSpeed(this.attackSpeed)
                 .characterSpecies(this.characterSpecies)
                 .build();
+    }
+
+    public void apply(Characters character) {
+        character.update(this);
     }
 }
