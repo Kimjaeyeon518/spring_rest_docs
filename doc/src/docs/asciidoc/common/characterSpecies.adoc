@@ -1,0 +1,6 @@
+:doctype: book
+:icons: font
+
+// HTML로 변환시 div id=”characterSpecies”
+[[characterSpecies]]
+include::{snippets}/common/custom-response-fields-characterSpecies.adoc[]

@@ -6,6 +6,8 @@ import spring.rest.api.doc.dto.CharacterResponseDto;
 import spring.rest.api.doc.dto.WeaponResponseDto;
 
 import javax.persistence.*;
+import javax.persistence.EnumType;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,8 +25,9 @@ public class Characters {
     private Float hp;
     private Float attackPower; // 공격력
     private Integer attackSpeed; // 공격속도
+    private LocalDate birthDate;
 
-    @Enumerated(EnumType.STRING)
+    @Enumerated(value = EnumType.STRING)
     private CharacterSpecies characterSpecies;     // 종족
 
     @ManyToOne
@@ -39,10 +42,11 @@ public class Characters {
                 .attackSpeed(this.attackSpeed)
                 .characterSpecies(this.characterSpecies)
 //                .weapon(new WeaponResponseDto(this.weapon))
+                .birthDate(this.birthDate)
                 .build();
     }
 
-    public void update(CharacterRequestDto characterRequestDto) {
+    public void update(CharacterRequestDto.update characterRequestDto) {
         this.hp = characterRequestDto.getHp();
         this.attackPower = characterRequestDto.getAttackPower();
         this.attackSpeed = characterRequestDto.getAttackSpeed();

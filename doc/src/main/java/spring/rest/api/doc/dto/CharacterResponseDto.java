@@ -5,9 +5,9 @@ import spring.rest.api.doc.domain.CharacterSpecies;
 import spring.rest.api.doc.domain.Characters;
 import spring.rest.api.doc.domain.Weapon;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
+import java.time.LocalDate;
+
+@Getter
 @Builder
 public class CharacterResponseDto {
     private Long id;
@@ -15,18 +15,22 @@ public class CharacterResponseDto {
     private Float attackPower;          // 공격력
     private Integer attackSpeed;        // 공격속도
     private CharacterSpecies characterSpecies;      // 종족
-    private WeaponResponseDto weapon;
-
-    public CharacterResponseDto(Characters characters) {
-        id = characters.getId();
-        hp = characters.getHp();
-        attackPower = characters.getAttackPower();
-        characterSpecies = characters.getCharacterSpecies();
-        weapon = new WeaponResponseDto(characters.getWeapon());
-    }
+    private LocalDate birthDate;
 
     @Data
     public static class delete {
         private Long id;
+    }
+
+    public static CharacterResponseDto of(Characters characters) {
+        return CharacterResponseDto.builder()
+                .id(characters.getId())
+                .hp(characters.getHp())
+                .attackPower(characters.getAttackPower())
+                .attackSpeed(characters.getAttackSpeed())
+                .characterSpecies(characters.getCharacterSpecies())
+//                .weapon(characters.toResponseDto().getWeapon())
+                .birthDate(characters.getBirthDate())
+                .build();
     }
 }

@@ -1,4 +1,4 @@
-package spring.rest.api.doc.restcontroller;
+package spring.rest.api.doc.api.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -11,32 +11,32 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-public class CharacterRestController {
+public class CharacterApiController {
 
     private final CharacterService characterService;
 
-    @GetMapping("/characters")
+    @GetMapping("/v1/characters")
     public ApiResponseDto<List<CharacterResponseDto>> findAll() {
         return ApiResponseDto.createOK(characterService.findAll());
     }
 
-    @GetMapping("/characters/{id}")
+    @GetMapping("/v1/characters/{id}")
     public ApiResponseDto<CharacterResponseDto> findOne(@PathVariable("id") Long id) {
         return ApiResponseDto.createOK(characterService.findById(id));
     }
 
-    @PostMapping("/characters")
-    public ApiResponseDto<CharacterResponseDto> create(@ModelAttribute CharacterRequestDto characterRequestDto) {
+    @PostMapping("/v1/characters")
+    public ApiResponseDto<CharacterResponseDto> create(@ModelAttribute CharacterRequestDto.create characterRequestDto) {
         return ApiResponseDto.createOK(characterService.create(characterRequestDto));
     }
 
-    @PutMapping("/characters/{id}")
+    @PutMapping("/v1/characters/{id}")
     public ApiResponseDto<CharacterResponseDto> update(@PathVariable("id") Long id,
-                                                       @ModelAttribute CharacterRequestDto characterRequestDto) throws Exception {
+                                                       @ModelAttribute CharacterRequestDto.update characterRequestDto) throws Exception {
         return ApiResponseDto.createOK(characterService.update(id, characterRequestDto));
     }
 
-    @DeleteMapping("/characters/{id}")
+    @DeleteMapping("/v1/characters/{id}")
     public ApiResponseDto<String> delete(@PathVariable("id") Long id) {
         characterService.delete(id);
                 

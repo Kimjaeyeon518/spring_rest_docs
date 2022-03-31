@@ -1,19 +1,31 @@
+// < 참고 >
+// https://backtony.github.io/spring/2021-10-15-spring-test-3/#indexadoc
+// https://docs.spring.io/spring-restdocs/docs/current/reference/html5/
+// https://asciidoctor.cn/docs/user-manual/
+// https://docs.asciidoctor.org/asciidoctor/latest/docinfo/
+// https://techblog.woowahan.com/2678/
+
 ifndef::snippets[]
 :snippets: ../../../build/generated-snippets
 endif::[]
-= API Document
+= API Docs
 :doctype: book
 :icons: font
+// :source-highlighter: 문서에 표기되는 코드들의 하이라이팅을 highlightjs를 사용
 :source-highlighter: highlightjs
+// :toc: (Table Of Contents)를 문서의 좌측에 두기
 :toc: left
 :toclevels: 3
 :sectlinks:
+// :docinfo: shared-head -> 팝업을 사용할 adoc 에만 선언
+// private 선언 시 특정 파일 이름을 선언해서 사용 가능합니다.
+// shared 선언 시 기본적으로 docinfo.html 을 사용합니다.
 :docinfo: shared-head
 
 [[introduction]]
 == 소개
 
-Character API Documents
+BigInsight API Documents
 
 [[common]]
 == 공통 사항
@@ -34,139 +46,12 @@ API에 관계없이 아래 사항을 지켜주셔야 합니다.
 
 === Common Response
 
-[[overview-http-status-codes]]
-=== HTTP status codes
+include::{snippets}/common/custom-response-fields.adoc[]
 
-|===
-| Status code | Usage
+include::{snippets}/common/custom-response-fields-apiResponseCodes.adoc[]
 
-| `200 OK`
-| successfully
+== APIs
 
-| `400 Bad Request`
-| Bad Request
-
-| `500 Internal Server Error`
-| Server Error
-|===
-
-[[overview-error-response]]
-=== Error Response
-
-operation::rest-document-api-test/request-body-test[snippets='http-response,response-fields']
-
-[[weapon]]
-=== Weapon
-|===
-| 필드 | 타입 | 설명
-
-| `id`
-| `NUMBER`
-| 무기 ID
-
-| `name`
-| `String`
-| 무기 이름
-
-| `effect`
-| `String`
-| 무기 효과
-
-|===
-
-&#160;
-
-= Character API
-
-=== 단건 조회
-
-==== Request
-
-include::{snippets}/character-read/path-parameters.adoc[]
-
-===== Request HTTP Example
-
-include::{snippets}/character-read/http-request.adoc[]
-
-==== Response
-
-include::{snippets}/character-read/response-fields.adoc[]
-
-===== Response HTTP Example
-
-include::{snippets}/character-read/http-response.adoc[]
-
-&#160;
-
-=== 리스트 조회
-
-==== Request HTTP Example
-
-include::{snippets}/characterList/http-request.adoc[]
-
-==== Response
-
-include::{snippets}/characterList/response-fields.adoc[]
-
-===== Response HTTP Example
-
-include::{snippets}/characterList/http-response.adoc[]
-
-&#160;
-
-=== 추가
-
-==== Request HTTP Example
-
-include::{snippets}/character-create/http-request.adoc[]
-
-==== Response
-
-include::{snippets}/character-create/response-fields.adoc[]
-
-===== Response HTTP Example
-
-include::{snippets}/character-create/http-response.adoc[]
-
-&#160;
-
-=== 수정
-
-==== Request
-
-include::{snippets}/character-update/path-parameters.adoc[]
-
-===== Request HTTP Example
-
-include::{snippets}/character-update/http-request.adoc[]
-
-==== Response
-
-include::{snippets}/character-update/response-fields.adoc[]
-
-===== Response HTTP Example
-
-include::{snippets}/character-update/http-response.adoc[]
-
-&#160;
-
-=== 삭제
-
-==== Request
-
-include::{snippets}/character-delete/path-parameters.adoc[]
-
-===== Request HTTP Example
-
-include::{snippets}/character-delete/http-request.adoc[]
-
-==== Response
-
-include::{snippets}/character-delete/response-fields.adoc[]
-
-===== Response HTTP Example
-
-include::{snippets}/character-delete/http-response.adoc[]
-
-&#160;
+// window=_blank : 새 창에서 열림
+=== 1. link:character.html[Character API, window=_blank]
 

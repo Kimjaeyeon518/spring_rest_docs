@@ -1,16 +1,23 @@
 package spring.rest.api.doc.domain;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
-@AllArgsConstructor
-public enum CharacterSpecies {
+@RequiredArgsConstructor
+public enum CharacterSpecies implements EnumType {
 
     COMMON("공통"),
-    HUMAN("휴먼"),
+    HUMAN("인간"),
     OAK("오크"),
     ELF("엘프");
 
-    private String value;
+    private final String text;
+
+    @Override
+    public String getId() {
+        return this.name();
+    }
 }

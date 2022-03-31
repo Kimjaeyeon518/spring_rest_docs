@@ -11,7 +11,7 @@ public class ApiException extends RuntimeException {
     public ApiException(ApiResponseCode status, Exception e) {
         super(e);
         this.status = status;
-        this.message = status.getMessage();
+        this.message = status.getText();
     }
 
     public ApiException(ApiResponseCode status, String message, Exception e) {
@@ -22,7 +22,7 @@ public class ApiException extends RuntimeException {
 
     public ApiException(ApiResponseCode status) {
         this.status = status;
-        this.message = status.getMessage();
+        this.message = status.getText();
     }
 
     public ApiException(ApiResponseCode status, String message) {

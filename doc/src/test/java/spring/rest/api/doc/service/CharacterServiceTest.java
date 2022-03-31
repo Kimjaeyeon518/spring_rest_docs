@@ -8,6 +8,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import spring.rest.api.doc.domain.CharacterSpecies;
 import spring.rest.api.doc.domain.Characters;
 import spring.rest.api.doc.domain.Weapon;
 import spring.rest.api.doc.dto.CharacterRequestDto;
@@ -33,8 +34,8 @@ class CharacterServiceTest {
     private CharacterServiceImpl characterService;
     @Mock
     private CharacterRepository characterRepository;
+
     private Characters characters;
-    private CharacterRequestDto characterRequestDto;
 
     @BeforeEach
     public void initCharacter() {
@@ -42,8 +43,6 @@ class CharacterServiceTest {
                 .id(1L)
                 .weapon(new Weapon(1L))
                 .build();
-
-        characterRequestDto = new CharacterRequestDto(1L);
     }
 
     @Test
@@ -51,6 +50,13 @@ class CharacterServiceTest {
     public void addCharacter() {
         // given
         given(characterRepository.save(any(Characters.class))).willReturn(characters);
+
+        CharacterRequestDto.create characterRequestDto = CharacterRequestDto.create.builder()
+                .hp(100F)
+                .attackPower(50F)
+                .attackSpeed(100)
+                .characterSpecies(CharacterSpecies.HUMAN)
+                .build();
 
         // when
         CharacterResponseDto savedGameCharacter = characterService.create(characterRequestDto);
@@ -67,10 +73,10 @@ class CharacterServiceTest {
         given(characterRepository.findById(any(Long.class))).willReturn(Optional.ofNullable(characters));
 
         // when
-        Characters foundCharacter = characterRepository.findById(characterRequestDto.getId()).get();
+        Characters foundCharacter = characterRepository.findById(1L).get();
 
         // then
-        then(characterRepository).should(times(1)).findById(characterRequestDto.getId());
+        then(characterRepository).should(times(1)).findById(1L);
         assertThat(foundCharacter).isEqualTo(characters);
     }
 

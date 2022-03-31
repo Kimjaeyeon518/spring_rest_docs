@@ -28,19 +28,19 @@ public class CharacterServiceImpl implements CharacterService {
     @Override
     public List<CharacterResponseDto> findAll() {
         return characterRepository.findAll().stream()
-                .map(c -> new CharacterResponseDto(c))
+                .map(CharacterResponseDto::of)
                 .collect(Collectors.toList());
     }
 
     @Override
     public CharacterResponseDto findById(Long id) {
         return characterRepository.findById(id)
-                .map(c -> new CharacterResponseDto(c))
+                .map(CharacterResponseDto::of)
                 .orElseThrow(NotFoundException::new);
     }
 
     @Override
-    public CharacterResponseDto create(CharacterRequestDto characterRequestDto) {
+    public CharacterResponseDto create(CharacterRequestDto.create characterRequestDto) {
         Characters character = characterRepository.save(characterRequestDto.toEntity());
 
         return character.toResponseDto();
@@ -48,7 +48,7 @@ public class CharacterServiceImpl implements CharacterService {
 
     @Override
     @Transactional
-    public CharacterResponseDto update(Long id, CharacterRequestDto characterRequestDto) {
+    public CharacterResponseDto update(Long id, CharacterRequestDto.update characterRequestDto) {
 
         Characters character = characterRepository.findById(id)
                 .orElseThrow(NotFoundException::new);
@@ -58,7 +58,7 @@ public class CharacterServiceImpl implements CharacterService {
 
         characterRequestDto.apply(character);
 
-        return new CharacterResponseDto(character);
+        return CharacterResponseDto.of(character);
     }
 
     @Override

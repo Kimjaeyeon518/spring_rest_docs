@@ -21,6 +21,9 @@ repositories {
 }
 
 dependencies {
+	implementation 'org.projectlombok:lombok:1.18.20'
+
+	// build/generated-snippets 에 생긴 .adoc 조각들을 프로젝트 내("src/docs/asciidoc") 의 .adoc 파일에서 읽어들일 수 있도록 연동해줍니다.
 	asciidoctorExt 'org.springframework.restdocs:spring-restdocs-asciidoctor'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -29,6 +32,10 @@ dependencies {
 //	runtimeOnly 'mysql:mysql-connector-java'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	// restdocs-mockmvc의 testCompile 구성 -> mockMvc를 사용해서 snippets 조각들을 뽑아낼 수 있게 된다.
+	// MockMvc 대신 WebTestClient을 사용하려면 spring-restdocs-webtestclient 추가
+	// MockMvc 대신 REST Assured를 사용하려면 spring-restdocs-restassured 를 추가
 	testImplementation 'org.springframework.restdocs:spring-restdocs-mockmvc'
 }
 
@@ -38,33 +45,55 @@ ext {
 
 test {
 	outputs.dir snippetsDir
-	println "--------------TEST START-------------"
+	useJUnitPlatform()		// JUnit Test 실행
 }
 
 asciidoctor {
-	inputs.dir snippetsDir
+	dependsOn test	// gradle build 시 test -> asciidoctor 순으로 수행
 	configurations 'asciidoctorExt'
-	dependsOn test	// test task 이후에 실행될 수 있도록 의존성 설정
-	println "--------------asciidoctor START-------------"
+	inputs.dir snippetsDir
+
+	// source가 없으면 .adoc파일을 전부 html로 만들어버림
+	// source 지정시 특정 adoc만 HTML로 만든다.
+//		sources{
+//			include("**/index.adoc","**/common/*.adoc")
+//		}
+
+	baseDirFollowsSourceFile()	// 중요 !! 플러그인 org.asciidoctor.jvm.convert 3.1.0 이상부터 적용 필수. -> docinfo.html 을 .adoc 파일이 있는 디렉토리 내에서 찾음.
 }
 
-bootJar {
-	dependsOn asciidoctor    // documentation has been generated before the jar is built
-	// 실제 배포 시, BOOT-INF/classes가 classpath가 됩니다.
-	println "@@@@@@@@@@@@@@@@@"
-	println "${asciidoctor.outputDir}"
-	from ("${asciidoctor.outputDir}") {
-		into 'static/docs'
-	}
-}
-
+// asccidoctor 작업 이후 생성된 HTML 파일을 static/docs 로 copy
 task copyDocument(type: Copy) {
-	println "--------------copyDocument START-------------"
 	dependsOn asciidoctor
+
 	from file("build/docs/asciidoc")
 	into file("src/main/resources/static/docs")
 }
 
+// build 시 작업 흐름 : clean -> test -> asciidoctor -> copyDocument -> build jar
+build {
+	dependsOn clean
+	dependsOn copyDocument
+}
+
 targetCompatibility = JavaVersion.VERSION_17
 
-// flow : test -> asciidoctor -> build jar
+
+// file exist
+//// static/docs 폴더 비우기
+//asciidoctor.doFirst {
+//	delete file('src/main/resources/static/docs')	// 개발 환경 html 삭제
+////	delete file('BOOT-INF/classes/static/docs')		// BOOT-INF/classes/static/docs/index.html duplicate 발생으로 인한 삭제 작업
+//}
+
+
+//
+//bootJar {
+//	dependsOn asciidoctor    // gradle build 시 asciidoctor -> bootJar 순으로 수행
+//
+//	// ${asciidoctor.outputDir} : "build/docs/asciidoc"
+//	// 실제 배포 시, "BOOT-INF/classes" 가 classpath가 됩니다.
+//	from ("${asciidoctor.outputDir}") {
+//		into 'static/docs'
+//	}
+//}

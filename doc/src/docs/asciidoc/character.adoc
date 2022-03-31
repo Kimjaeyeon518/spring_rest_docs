@@ -1,0 +1,114 @@
+ifndef::snippets[]
+:snippets: ../../../build/generated-snippets
+endif::[]
+= Character API Document
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 3
+:sectlinks:
+:docinfo: shared-head
+
+
+== Character API
+
+=== 단건 조회
+
+==== Request
+
+include::{snippets}/character-find/path-parameters.adoc[]
+
+===== Request HTTP Example
+
+include::{snippets}/character-find/http-request.adoc[]
+
+==== Response
+
+include::{snippets}/character-find/response-fields-data.adoc[]
+
+===== Response HTTP Example
+
+include::{snippets}/character-find/http-response.adoc[]
+
+&#160;
+
+=== 리스트 조회
+
+==== Request
+
+===== Request HTTP Example
+
+include::{snippets}/character-find-all/http-request.adoc[]
+
+==== Response
+
+include::{snippets}/character-find-all/response-fields-data.adoc[]
+
+===== Response HTTP Example
+
+include::{snippets}/character-find-all/http-response.adoc[]
+
+&#160;
+
+=== 추가
+
+==== Request
+
+include::{snippets}/character-create/request-fields.adoc[]
+
+===== Request HTTP Example
+
+include::{snippets}/character-create/http-request.adoc[]
+
+==== Response
+
+include::{snippets}/character-create/response-fields-data.adoc[]
+
+===== Response HTTP Example
+
+include::{snippets}/character-create/http-response.adoc[]
+
+&#160;
+
+=== 수정
+
+==== Request
+
+include::{snippets}/character-update/path-parameters.adoc[]
+
+====== Request Fields
+
+include::{snippets}/character-update/request-fields.adoc[]
+
+====== Request HTTP Example
+
+include::{snippets}/character-update/http-request.adoc[]
+
+==== Response
+
+include::{snippets}/character-update/response-fields-data.adoc[]
+
+===== Response HTTP Example
+
+include::{snippets}/character-update/http-response.adoc[]
+
+&#160;
+
+=== 삭제
+
+==== Request
+
+include::{snippets}/character-delete/path-parameters.adoc[]
+
+===== Request HTTP Example
+
+include::{snippets}/character-delete/http-request.adoc[]
+
+==== Response
+
+===== Response HTTP Example
+
+include::{snippets}/character-delete/http-response.adoc[]
+
+&#160;

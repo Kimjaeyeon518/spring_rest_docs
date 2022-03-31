@@ -28,7 +28,7 @@ public class ApiResponseDto<T> {
 
     private void bindStatus(ApiResponseCode status) {
         this.code = status;
-        this.message = status.getMessage();
+        this.message = status.getText();
     }
 
     public static <T> spring.rest.api.doc.response.ApiResponseDto<T> createOK(T data) {

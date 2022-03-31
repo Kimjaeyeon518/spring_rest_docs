@@ -10,7 +10,7 @@ public interface CharacterService {
 
     List<CharacterResponseDto> findAll();
     CharacterResponseDto findById(Long id);
-    CharacterResponseDto create(CharacterRequestDto characterRequestDto);
-    CharacterResponseDto update(Long id, CharacterRequestDto characterRequestDto) throws Exception;
+    CharacterResponseDto create(CharacterRequestDto.create characterRequestDto);
+    CharacterResponseDto update(Long id, CharacterRequestDto.update characterRequestDto) throws Exception;
     void delete(Long id);
 }
